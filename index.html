@@ -1,0 +1,572 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Coach Desk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Робочий кабінет фітнес-тренера: клієнти, конструктор тренувань, розклад і прогрес.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Onest:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout concept: tool shell. Fixed sidebar on desktop, bottom tab bar on phones; content as dense but airy panels on graphite, one cobalt accent. */
+:root {
+  --bg: #090c14;
+  --panel: #111729;
+  --panel-2: #172038;
+  --panel-3: #1e2a48;
+  --line: rgba(255,255,255,.09);
+  --line-2: rgba(255,255,255,.18);
+  --fg: #eef2fb;
+  --mute: #8b97b1;
+  --cobalt: #3350ff;
+  --cobalt-2: #7f94ff;
+  --ok: #4cd08a;
+  --warn: #f2b84b;
+  --err: #ff6b6b;
+  --font-display: "Unbounded", "Montserrat", "Segoe UI", Arial, sans-serif;
+  --font-body: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --gl: max(16px, env(safe-area-inset-left, 0px));
+  --gr: max(16px, env(safe-area-inset-right, 0px));
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+h1, h2, h3, p { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--cobalt-2); outline-offset: 2px; border-radius: 6px; }
+.mono { font-family: var(--font-mono); }
+
+.app { display: grid; grid-template-columns: 232px minmax(0, 1fr); min-height: 100svh; }
+.side { position: sticky; top: 0; height: 100svh; padding: 24px 16px max(24px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 28px; border-right: 1px solid var(--line); background: #0b101c; }
+.logo { display: flex; align-items: center; gap: 12px; font-family: var(--font-display); font-weight: 800; font-size: 15px; text-transform: uppercase; letter-spacing: .02em; padding-inline: 8px; }
+.logo i { width: 34px; height: 34px; border-radius: 10px; background: var(--cobalt); display: grid; place-items: center; font-style: normal; font-size: 15px; }
+.nav { display: grid; gap: 4px; }
+.nav button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 46px; padding: 0 12px; border: 0; border-radius: 12px; background: transparent; color: var(--mute); font-weight: 500; text-align: left; transition: background .2s, color .2s; }
+.nav button svg { width: 20px; height: 20px; flex: none; }
+.nav button:hover { background: var(--panel); color: var(--fg); }
+.nav button[aria-current=page] { background: var(--cobalt); color: #fff; box-shadow: 0 10px 26px -12px rgba(51,80,255,.8); }
+.side .foot { margin-top: auto; display: grid; gap: 10px; font-size: 12px; color: var(--mute); padding-inline: 8px; }
+
+.main { padding: 28px var(--gr) 60px 32px; min-width: 0; max-width: 1180px; width: 100%; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
+.top h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(22px, 3vw, 32px); text-transform: uppercase; letter-spacing: -.01em; line-height: 1.05; }
+.top .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 16px; margin-bottom: 20px; border: 1px solid rgba(242,184,75,.4); background: rgba(242,184,75,.08); color: #f0d9a4; border-radius: 14px; font-size: 14px; }
+.banner.err { border-color: rgba(255,107,107,.45); background: rgba(255,107,107,.08); color: #ffc7c7; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--panel-2); font-weight: 500; transition: background .2s, transform .15s, border-color .2s; white-space: nowrap; }
+.btn:hover { background: var(--panel-3); border-color: rgba(255,255,255,.3); }
+.btn:active { transform: scale(.98); }
+.btn.pri { background: var(--cobalt); border-color: var(--cobalt); color: #fff; box-shadow: 0 10px 24px -12px rgba(51,80,255,.9); }
+.btn.pri:hover { background: #4560ff; }
+.btn.danger { color: var(--err); border-color: rgba(255,107,107,.4); background: transparent; }
+.btn.danger:hover { background: rgba(255,107,107,.1); }
+.btn.sm { min-height: 36px; padding: 0 12px; font-size: 13px; border-radius: 10px; }
+.btn.ghost { background: transparent; }
+.icon-btn { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--line); background: transparent; display: grid; place-items: center; color: var(--mute); flex: none; transition: .2s; }
+.icon-btn:hover { color: var(--err); border-color: rgba(255,107,107,.4); }
+.icon-btn svg { width: 16px; height: 16px; }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; }
+.empty { padding: 48px 24px; text-align: center; color: var(--mute); display: grid; gap: 14px; justify-items: center; }
+.empty b { color: var(--fg); font-size: 17px; font-weight: 600; }
+.tag { font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 99px; font-size: 12px; border: 1px solid var(--line-2); color: var(--mute); }
+.pill.on { color: #fff; background: var(--cobalt); border-color: var(--cobalt); }
+.pill.ok { color: var(--ok); border-color: rgba(76,208,138,.4); }
+
+/* inputs */
+.field { display: grid; gap: 6px; min-width: 0; }
+.field > label, .lbl { font-size: 12px; color: var(--mute); letter-spacing: .02em; }
+.inp, select.inp, textarea.inp { width: 100%; min-height: 44px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line-2); background: #0b101c; outline: none; transition: border-color .2s, box-shadow .2s; }
+textarea.inp { min-height: 88px; resize: vertical; }
+.inp:focus { border-color: var(--cobalt-2); box-shadow: 0 0 0 3px rgba(51,80,255,.25); }
+.inp.bad { border-color: var(--err); }
+.inp::placeholder { color: #5f6b86; }
+select.inp { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--mute) 50%), linear-gradient(135deg, var(--mute) 50%, transparent 50%); background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 34px; }
+.err { color: var(--err); font-size: 13px; }
+.err:empty { display: none; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.search { position: relative; }
+.search .inp { padding-left: 38px; min-width: 220px; }
+.search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--mute); }
+
+/* clients */
+.rows { display: grid; }
+.crow { display: grid; grid-template-columns: 44px minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) auto; gap: 16px; align-items: center; width: 100%; padding: 14px 18px; border: 0; border-top: 1px solid var(--line); background: transparent; text-align: left; transition: background .2s; }
+.crow:first-child { border-top: 0; }
+.crow:hover { background: var(--panel-2); }
+.av { width: 44px; height: 44px; border-radius: 14px; background: var(--panel-3); border: 1px solid var(--line-2); display: grid; place-items: center; font-family: var(--font-display); font-weight: 800; font-size: 13px; color: var(--cobalt-2); }
+.crow b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crow small { display: block; color: var(--mute); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crow .col small:first-child { font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 2px; }
+.chev { color: var(--mute); width: 18px; height: 18px; }
+
+/* modal */
+.modal { position: fixed; inset: 0; z-index: 50; display: flex; justify-content: flex-end; background: rgba(4,6,12,.7); backdrop-filter: blur(4px); animation: fade .2s ease; }
+.modal[hidden] { display: none; }
+.sheet { width: min(460px, 100%); height: 100%; overflow-y: auto; background: var(--panel); border-left: 1px solid var(--line-2); padding: 24px var(--gr) max(24px, env(safe-area-inset-bottom, 0px)) 24px; display: grid; gap: 18px; align-content: start; animation: slide .28s cubic-bezier(.2,.7,.2,1); }
+.sheet.center { align-self: center; margin-inline: auto; height: auto; max-height: 92svh; border: 1px solid var(--line-2); border-radius: 22px; }
+.modal.mid { justify-content: center; padding: 16px; align-items: center; }
+.sheet h2 { font-family: var(--font-display); font-size: 20px; text-transform: uppercase; font-weight: 800; }
+.sheet .head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.sheet .btns { display: flex; gap: 10px; flex-wrap: wrap; }
+.quicklinks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.quicklinks .btn { flex-direction: column; min-height: 64px; gap: 2px; font-size: 13px; }
+.quicklinks .btn svg { width: 18px; height: 18px; color: var(--cobalt-2); }
+@keyframes fade { from { opacity: 0; } }
+@keyframes slide { from { transform: translateX(40px); opacity: 0; } }
+.toast { position: fixed; left: 50%; bottom: max(86px, calc(env(safe-area-inset-bottom, 0px) + 20px)); transform: translate(-50%, 20px); background: #fff; color: #0a0f1c; padding: 10px 18px; border-radius: 99px; font-weight: 500; font-size: 14px; opacity: 0; pointer-events: none; transition: .25s; z-index: 80; max-width: calc(100% - 32px); }
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+/* builder */
+.builder { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 18px; align-items: start; }
+.plist { padding: 8px; display: grid; gap: 4px; }
+.pitem { display: grid; gap: 2px; width: 100%; text-align: left; padding: 12px; border-radius: 14px; border: 1px solid transparent; background: transparent; transition: .2s; }
+.pitem:hover { background: var(--panel-2); }
+.pitem[aria-current=true] { background: var(--panel-2); border-color: var(--cobalt); }
+.pitem b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pitem small { color: var(--mute); font-size: 12.5px; }
+.editor { padding: 20px; display: grid; gap: 18px; }
+.day { border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: grid; gap: 10px; background: var(--panel-2); }
+.day-head { display: flex; gap: 10px; align-items: center; }
+.day-head .inp { font-weight: 600; }
+.exh, .ex { display: grid; grid-template-columns: minmax(0, 1fr) 64px 72px 86px 36px; gap: 8px; align-items: center; }
+.exh { font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--mute); padding-inline: 2px; }
+.ex .inp { min-height: 40px; padding: 8px 10px; background: #0b101c; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chip { border: 1px dashed var(--line-2); background: transparent; border-radius: 99px; padding: 6px 12px; font-size: 13px; color: var(--mute); min-height: 34px; transition: .2s; }
+.chip:hover { color: #fff; border-color: var(--cobalt-2); background: rgba(51,80,255,.15); }
+
+/* schedule */
+.wkbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.wkbar .rng { font-family: var(--font-display); font-weight: 600; font-size: 16px; }
+.wk { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; }
+.dcol { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 12px; display: grid; gap: 8px; align-content: start; min-height: 260px; }
+.dcol.today { border-color: var(--cobalt); box-shadow: 0 0 0 1px var(--cobalt) inset; }
+.dhead { display: flex; justify-content: space-between; align-items: baseline; }
+.dhead b { font-family: var(--font-display); font-size: 22px; line-height: 1; }
+.dhead span { font-family: var(--font-mono); font-size: 11px; color: var(--mute); text-transform: uppercase; letter-spacing: .1em; }
+.sess { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: center; padding: 10px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--line); text-align: left; width: 100%; transition: .2s; }
+.sess:hover { border-color: var(--cobalt-2); }
+.sess .t { font-family: var(--font-mono); font-size: 12px; color: var(--cobalt-2); grid-column: 1 / -1; }
+.sess b { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sess small { grid-column: 1; color: var(--mute); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sess.done { opacity: .6; }
+.sess.done b { text-decoration: line-through; }
+.tick { grid-column: 2; grid-row: 2 / 4; width: 30px; height: 30px; border-radius: 9px; border: 2px solid #4a5675; background: transparent; display: grid; place-items: center; padding: 0; }
+.tick svg { width: 14px; height: 14px; opacity: 0; }
+.sess.done .tick { background: var(--cobalt); border-color: var(--cobalt); }
+.sess.done .tick svg { opacity: 1; }
+.addday { border: 1px dashed var(--line-2); background: transparent; border-radius: 12px; min-height: 40px; color: var(--mute); font-size: 13px; transition: .2s; }
+.addday:hover { color: #fff; border-color: var(--cobalt-2); }
+
+/* progress */
+.prog { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.metrics { display: flex; gap: 6px; flex-wrap: wrap; }
+.metrics button { border: 1px solid var(--line-2); background: transparent; border-radius: 99px; padding: 8px 16px; min-height: 38px; font-size: 14px; transition: .2s; }
+.metrics button[aria-pressed=true] { background: var(--cobalt); border-color: var(--cobalt); color: #fff; }
+.chartbox { padding: 18px; display: grid; gap: 14px; }
+.chartbox svg { width: 100%; height: auto; display: block; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.stat { padding: 12px 14px; border-radius: 14px; background: var(--panel-2); border: 1px solid var(--line); }
+.stat .tag { display: block; margin-bottom: 4px; }
+.stat b { font-family: var(--font-display); font-size: 20px; font-weight: 800; }
+.mform { padding: 18px; display: grid; gap: 12px; }
+.mlist { display: grid; }
+.mrow { display: grid; grid-template-columns: 90px repeat(4, minmax(0, 1fr)) 36px; gap: 8px; align-items: center; padding: 10px 4px; border-top: 1px solid var(--line); font-size: 13px; }
+.mrow.h { border-top: 0; font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--mute); }
+.mrow span.n { font-variant-numeric: tabular-nums; }
+
+.tabbar { display: none; }
+@media (max-width: 1100px) {
+  .wk { grid-template-columns: 1fr; }
+  .dcol { min-height: 0; grid-template-columns: 1fr; }
+  .prog { grid-template-columns: 1fr; }
+}
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; }
+  .side { display: none; }
+  .main { padding: 18px var(--gr) 110px var(--gl); }
+  .tabbar { display: grid; grid-template-columns: repeat(4, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; padding: 8px max(8px, env(safe-area-inset-right, 0px)) max(8px, env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); background: rgba(11,16,28,.92); backdrop-filter: blur(14px); border-top: 1px solid var(--line-2); }
+  .tabbar button { display: grid; justify-items: center; gap: 2px; min-height: 54px; border: 0; background: transparent; color: var(--mute); font-size: 11px; border-radius: 12px; }
+  .tabbar button svg { width: 22px; height: 22px; }
+  .tabbar button[aria-current=page] { color: #fff; background: var(--cobalt); }
+  .builder { grid-template-columns: 1fr; }
+  .crow { grid-template-columns: 44px minmax(0, 1fr) auto; }
+  .crow .col { display: none; }
+  .sheet { border-left: 0; }
+  .search .inp { min-width: 0; width: 100%; }
+  .search { flex: 1; min-width: 160px; }
+}
+@media (max-width: 560px) {
+  .grid2 { grid-template-columns: 1fr; }
+  .exh { display: none; }
+  .ex { grid-template-columns: minmax(0, 1fr) 1fr 1fr 36px; }
+  .ex .nm { grid-column: 1 / -1; }
+  .ex .del { grid-column: 4; grid-row: 2; }
+  .quicklinks { grid-template-columns: 1fr; }
+  .quicklinks .btn { flex-direction: row; min-height: 48px; }
+  .mrow { grid-template-columns: 70px repeat(4, minmax(0, 1fr)) 32px; font-size: 12px; gap: 4px; }
+  .stats { grid-template-columns: 1fr; }
+  .stat { display: flex; justify-content: space-between; align-items: baseline; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition-duration: .01ms !important; } }
+</style>
+
+<div class="app" lang="uk">
+  <aside class="side">
+    <div class="logo"><i>C</i><span>Coach Desk</span></div>
+    <nav class="nav" aria-label="Розділи" id="nav"></nav>
+    <div class="foot" id="sideFoot"></div>
+  </aside>
+  <main class="main" id="main">
+    <div id="banners"></div>
+    <header class="top"><h1 id="viewTitle"></h1><div class="actions" id="topActions"></div></header>
+    <div id="view"></div>
+  </main>
+  <nav class="tabbar" aria-label="Розділи" id="tabbar"></nav>
+</div>
+<div class="modal" id="modal" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"></div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ============ utils ============ */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-3);
+const pad = n => String(n).padStart(2, "0");
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseD = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const monday = d => { const x = new Date(d); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); x.setHours(0, 0, 0, 0); return x; };
+const WD = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
+const MON = ["січня", "лютого", "березня", "квітня", "травня", "червня", "липня", "серпня", "вересня", "жовтня", "листопада", "грудня"];
+const fmtDate = s => { const d = parseD(s); return `${d.getDate()} ${MON[d.getMonth()]}`; };
+const fmtShort = s => { const d = parseD(s); return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}`; };
+const initials = n => n.replace(/\(.*?\)/g, "").trim().split(/\s+/).slice(0, 2).map(w => w[0] || "").join("").toUpperCase() || "?";
+const ICON = {
+  clients: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.9c1.7.7 2.8 2.3 3 5.1"/></svg>',
+  builder: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9v6M6.5 6v12M17.5 6v12M21 9v6M6.5 12h11"/></svg>',
+  schedule: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>',
+  progress: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 19.5h17M5 15l4.5-5 3.5 3.5L19 6.5"/><path d="M15 6.5h4v4"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  chev: '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'
+};
+
+/* ============ storage ============ */
+const KEY = "coach-desk-v1";
+let storageOk = true, db;
+function load() { try { const r = localStorage.getItem(KEY); if (r) { const d = JSON.parse(r); if (d && Array.isArray(d.clients)) return d; } } catch (e) { storageOk = false; } return null; }
+let saveT = 0;
+function save() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { storageOk = false; renderBanners(); } }, 150); }
+
+function seed() {
+  const today = new Date(), mon = monday(today);
+  const mk = (name, phone, goal, notes, base) => {
+    const id = uid();
+    const m = [0, 1, 2, 3, 4].map(i => ({ id: uid(), date: iso(addDays(today, -28 + i * 7)), weight: +(base.w - i * base.dw).toFixed(1), waist: +(base.wa - i * base.dwa).toFixed(1), chest: base.c, hips: base.h }));
+    return { id, name, phone, goal, notes, demo: true, measures: m };
+  };
+  const c1 = mk("Олена (приклад)", "+380 50 000 00 01", "Зменшити відсоток жиру та покращити витривалість", "Тренування 3 рази на тиждень. Без болю в колінах.", { w: 68.4, dw: .6, wa: 74, dwa: .8, c: 92, h: 100 });
+  const c2 = mk("Максим (приклад)", "+380 50 000 00 02", "Набрати силу у базових вправах", "Є досвід у залі, потрібна структура.", { w: 82.0, dw: -.4, wa: 84, dwa: 0, c: 104, h: 99 });
+  const c3 = mk("Ірина (приклад)", "+380 50 000 00 03", "Підтримувати форму та гнучкість", "Зручний час: вечір.", { w: 59.8, dw: .2, wa: 68, dwa: .3, c: 88, h: 95 });
+  const prog = { id: uid(), name: "Фулбоді на 2 дні (приклад)", clientId: c2.id, demo: true, days: [
+    { id: uid(), title: "День A", exs: [{ id: uid(), name: "Присідання", sets: "4", reps: "6-8", weight: "70" }, { id: uid(), name: "Жим лежачи", sets: "4", reps: "6-8", weight: "60" }, { id: uid(), name: "Тяга в нахилі", sets: "3", reps: "8-10", weight: "50" }] },
+    { id: uid(), title: "День B", exs: [{ id: uid(), name: "Станова тяга", sets: "3", reps: "5", weight: "90" }, { id: uid(), name: "Жим стоячи", sets: "3", reps: "8", weight: "35" }, { id: uid(), name: "Планка", sets: "3", reps: "45 с", weight: "власна вага" }] }
+  ] };
+  const S = (c, dayOff, time, dur, title, done) => ({ id: uid(), clientId: c.id, date: iso(addDays(mon, dayOff)), time, duration: dur, title, done: !!done, demo: true });
+  const sessions = [S(c1, 0, "18:00", 60, "Силове тренування", true), S(c2, 1, "19:00", 75, "Фулбоді, день A"), S(c3, 2, "17:30", 45, "Мобільність"), S(c1, 3, "18:00", 60, "Кардіо та кор"), S(c2, 4, "19:00", 75, "Фулбоді, день B"), S(c3, 5, "11:00", 45, "Розтяжка")];
+  return { clients: [c1, c2, c3], programs: [prog], sessions };
+}
+db = load() || seed();
+if (!db.programs) db.programs = []; if (!db.sessions) db.sessions = [];
+
+/* ============ ui state ============ */
+const ui = { view: "clients", q: "", progId: null, week: monday(new Date()), pClient: null, metric: "weight" };
+const clientById = id => db.clients.find(c => c.id === id);
+const VIEWS = [["clients", "Клієнти"], ["builder", "Тренування"], ["schedule", "Розклад"], ["progress", "Прогрес"]];
+const TITLES = { clients: "Клієнти", builder: "Конструктор тренувань", schedule: "Розклад", progress: "Прогрес і заміри" };
+
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("on"), 2000); }
+function armDelete(btn, fn) {
+  if (btn.dataset.armed) { fn(); return; }
+  const old = btn.innerHTML; btn.dataset.armed = "1"; btn.textContent = "Точно видалити?";
+  setTimeout(() => { if (btn.isConnected) { delete btn.dataset.armed; btn.innerHTML = old; } }, 3000);
+}
+
+/* ============ modal ============ */
+let lastFocus = null;
+function openSheet(html, center) {
+  lastFocus = document.activeElement;
+  const m = $("#modal"), s = $("#sheet");
+  s.className = "sheet" + (center ? " center" : ""); m.classList.toggle("mid", !!center);
+  s.innerHTML = html; m.hidden = false;
+  const f = $("input, select, textarea", s); if (f) f.focus({ preventScroll: true });
+}
+function closeSheet() { $("#modal").hidden = true; $("#sheet").innerHTML = ""; if (lastFocus && lastFocus.isConnected) lastFocus.focus({ preventScroll: true }); }
+$("#modal").addEventListener("mousedown", e => { if (e.target.id === "modal") closeSheet(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#modal").hidden) closeSheet(); });
+
+/* ============ shell ============ */
+function renderShell() {
+  const nb = VIEWS.map(([v, l]) => `<button type="button" data-act="nav" data-v="${v}" ${ui.view === v ? 'aria-current="page"' : ""}>${ICON[v === "builder" ? "builder" : v]}<span>${l}</span></button>`).join("");
+  $("#nav").innerHTML = nb; $("#tabbar").innerHTML = nb;
+  $("#viewTitle").textContent = TITLES[ui.view];
+  $("#sideFoot").innerHTML = `<span>${db.clients.length} клієнтів</span><button class="btn sm ghost" type="button" data-act="backup">Резервна копія</button>`;
+  renderBanners();
+}
+function renderBanners() {
+  let h = "";
+  if (!storageOk) h += `<div class="banner err">Браузер не дозволяє зберігати дані. Усе, що ви вводите, пропаде після закриття сторінки. Зробіть резервну копію.<button class="btn sm" type="button" data-act="backup">Резервна копія</button></div>`;
+  const hasDemo = db.clients.some(c => c.demo) || db.programs.some(p => p.demo) || db.sessions.some(s => s.demo);
+  if (hasDemo) h += `<div class="banner"><span>Показано приклади клієнтів, програми та занять. Вони допомагають роздивитися інтерфейс.</span><button class="btn sm" type="button" data-act="clear-demo">Видалити приклади</button></div>`;
+  $("#banners").innerHTML = h;
+}
+function go(v) { ui.view = v; render(); window.scrollTo({ top: 0 }); }
+function render() { renderShell(); ({ clients: renderClients, builder: renderBuilder, schedule: renderSchedule, progress: renderProgress })[ui.view](); }
+
+/* ============ clients ============ */
+function nextSession(cid) { const t = iso(new Date()); return db.sessions.filter(s => s.clientId === cid && !s.done && s.date >= t).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))[0]; }
+function lastWeight(c) { const m = [...c.measures].filter(x => x.weight).sort((a, b) => a.date.localeCompare(b.date)); return m.length ? m[m.length - 1].weight : null; }
+function renderClients() {
+  $("#topActions").innerHTML = `<div class="search">${ICON.search}<input class="inp" id="qSearch" type="search" placeholder="Пошук клієнта" aria-label="Пошук клієнта" value="${esc(ui.q)}"></div><button class="btn pri" type="button" data-act="client-new">${ICON.plus} Новий клієнт</button>`;
+  $("#view").innerHTML = `<div class="panel" id="clist"></div>`;
+  fillClients();
+  $("#qSearch").addEventListener("input", e => { ui.q = e.target.value; fillClients(); });
+}
+function fillClients() {
+  const q = ui.q.trim().toLowerCase();
+  const list = db.clients.filter(c => !q || (c.name + " " + c.goal + " " + c.phone).toLowerCase().includes(q)).sort((a, b) => a.name.localeCompare(b.name, "uk"));
+  const el = $("#clist");
+  if (!db.clients.length) { el.innerHTML = `<div class="empty"><b>Клієнтів поки немає</b><p>Додайте першого клієнта, щоб вести його програму, розклад і прогрес.</p><button class="btn pri" type="button" data-act="client-new">${ICON.plus} Додати клієнта</button></div>`; return; }
+  if (!list.length) { el.innerHTML = `<div class="empty"><b>Нічого не знайдено</b><p>Змініть запит або додайте нового клієнта.</p></div>`; return; }
+  el.innerHTML = `<div class="rows">` + list.map(c => {
+    const ns = nextSession(c.id), w = lastWeight(c);
+    return `<button class="crow" type="button" data-act="client-open" data-id="${c.id}"><span class="av">${esc(initials(c.name))}</span>
+      <span><b>${esc(c.name)}</b><small>${esc(c.goal || "Ціль не вказано")}</small></span>
+      <span class="col"><small>Наступне заняття</small><small style="color:var(--fg)">${ns ? fmtDate(ns.date) + ", " + ns.time : "не заплановано"}</small></span>
+      <span class="col"><small>Остання вага</small><small style="color:var(--fg)">${w ? w + " кг" : "немає замірів"}</small></span>${ICON.chev}</button>`;
+  }).join("") + `</div>`;
+}
+function clientForm(c) {
+  const n = !c;
+  return `<div class="head"><h2 id="sheetTitle">${n ? "Новий клієнт" : "Картка клієнта"}</h2><button class="btn sm ghost" type="button" data-act="close">Закрити</button></div>
+  <div class="field"><label for="cName">Ім'я</label><input class="inp" id="cName" value="${esc(c?.name)}" placeholder="Ім'я та прізвище" autocomplete="off"><div class="err" id="cNameErr" role="alert"></div></div>
+  <div class="field"><label for="cPhone">Телефон або Telegram</label><input class="inp" id="cPhone" value="${esc(c?.phone)}" placeholder="+380… або @нік"></div>
+  <div class="field"><label for="cGoal">Ціль</label><input class="inp" id="cGoal" value="${esc(c?.goal)}" placeholder="Чого хоче досягти клієнт"></div>
+  <div class="field"><label for="cNotes">Нотатки</label><textarea class="inp" id="cNotes" placeholder="Травми, побажання, графік">${esc(c?.notes)}</textarea></div>
+  ${n ? "" : `<div class="quicklinks"><button class="btn" type="button" data-act="c-prog" data-id="${c.id}">${ICON.builder}Програма</button><button class="btn" type="button" data-act="c-sess" data-id="${c.id}">${ICON.schedule}Заняття</button><button class="btn" type="button" data-act="c-meas" data-id="${c.id}">${ICON.progress}Прогрес</button></div>`}
+  <div class="btns"><button class="btn pri" type="button" data-act="client-save" data-id="${c?.id || ""}">Зберегти</button>${n ? "" : `<button class="btn danger" type="button" data-act="client-del" data-id="${c.id}">${ICON.trash} Видалити клієнта</button>`}</div>`;
+}
+function saveClient(id) {
+  const name = $("#cName").value.trim();
+  if (name.length < 2) { $("#cName").classList.add("bad"); $("#cNameErr").textContent = "Вкажіть ім'я, щонайменше 2 символи."; $("#cName").focus(); return; }
+  const data = { name, phone: $("#cPhone").value.trim(), goal: $("#cGoal").value.trim(), notes: $("#cNotes").value.trim() };
+  if (id) { Object.assign(clientById(id), data); toast("Картку збережено"); }
+  else { db.clients.push({ id: uid(), ...data, measures: [] }); toast("Клієнта додано"); }
+  save(); closeSheet(); render();
+}
+function deleteClient(id) {
+  db.clients = db.clients.filter(c => c.id !== id);
+  db.sessions = db.sessions.filter(s => s.clientId !== id);
+  db.programs.forEach(p => { if (p.clientId === id) p.clientId = ""; });
+  save(); closeSheet(); render(); toast("Клієнта видалено");
+}
+
+/* ============ builder ============ */
+const LIB = ["Присідання", "Жим лежачи", "Станова тяга", "Підтягування", "Віджимання", "Випади", "Тяга в нахилі", "Жим стоячи", "Румунська тяга", "Планка", "Скручування", "Стегновий місток"];
+const clientOpts = (sel, blank) => (blank ? `<option value="">${blank}</option>` : "") + db.clients.map(c => `<option value="${c.id}" ${c.id === sel ? "selected" : ""}>${esc(c.name)}</option>`).join("");
+function curProg() { return db.programs.find(p => p.id === ui.progId) || db.programs[0] || null; }
+function renderBuilder() {
+  $("#topActions").innerHTML = `<button class="btn pri" type="button" data-act="prog-new">${ICON.plus} Нова програма</button>`;
+  const p = curProg(); if (p) ui.progId = p.id;
+  const list = db.programs.map(x => {
+    const cn = x.clientId ? clientById(x.clientId)?.name : null;
+    return `<button class="pitem" type="button" data-act="prog-sel" data-id="${x.id}" aria-current="${x.id === ui.progId}"><b class="pn">${esc(x.name || "Без назви")}</b><small>${cn ? esc(cn) : "Шаблон"} · ${x.days.length} дн.</small></button>`;
+  }).join("");
+  $("#view").innerHTML = `<div class="builder"><div class="panel plist">${list || `<div class="empty" style="padding:28px 12px"><p>Програм ще немає.</p></div>`}</div><div id="editor">${p ? editor(p) : `<div class="panel empty"><b>Створіть першу програму</b><p>Додайте дні та вправи з підходами, повтореннями й вагою. Програму можна прикріпити до клієнта.</p><button class="btn pri" type="button" data-act="prog-new">${ICON.plus} Нова програма</button></div>`}</div></div>
+  <datalist id="exlib">${LIB.map(x => `<option value="${esc(x)}">`).join("")}</datalist>`;
+}
+function editor(p) {
+  const days = p.days.map((d, di) => `<div class="day">
+    <div class="day-head"><input class="inp" data-f="dtitle" data-d="${di}" value="${esc(d.title)}" aria-label="Назва дня" placeholder="Назва дня"><button class="icon-btn" type="button" data-act="day-del" data-d="${di}" aria-label="Видалити день">${ICON.trash}</button></div>
+    ${d.exs.length ? `<div class="exh"><span>Вправа</span><span>Підх.</span><span>Повт.</span><span>Вага</span><span></span></div>` : ""}
+    ${d.exs.map((x, ei) => `<div class="ex"><input class="inp nm" list="exlib" data-f="ex" data-k="name" data-d="${di}" data-e="${ei}" value="${esc(x.name)}" placeholder="Вправа" aria-label="Вправа"><input class="inp" inputmode="numeric" data-f="ex" data-k="sets" data-d="${di}" data-e="${ei}" value="${esc(x.sets)}" aria-label="Підходи" placeholder="4"><input class="inp" data-f="ex" data-k="reps" data-d="${di}" data-e="${ei}" value="${esc(x.reps)}" aria-label="Повторення" placeholder="8-10"><input class="inp" data-f="ex" data-k="weight" data-d="${di}" data-e="${ei}" value="${esc(x.weight)}" aria-label="Вага, кг" placeholder="кг"><button class="icon-btn del" type="button" data-act="ex-del" data-d="${di}" data-e="${ei}" aria-label="Видалити вправу">${ICON.trash}</button></div>`).join("")}
+    <div class="chips"><button class="chip" type="button" data-act="ex-add" data-d="${di}">+ Вправа</button>${LIB.slice(0, 5).map(n => `<button class="chip" type="button" data-act="ex-quick" data-d="${di}" data-n="${esc(n)}">${esc(n)}</button>`).join("")}</div></div>`).join("");
+  return `<div class="panel editor">
+    <div class="grid2"><div class="field"><label for="pName">Назва програми</label><input class="inp" id="pName" data-f="pname" value="${esc(p.name)}" placeholder="Наприклад, Сила на 3 дні"></div>
+    <div class="field"><label for="pClient">Клієнт</label><select class="inp" id="pClient" data-f="pclient">${clientOpts(p.clientId, "Шаблон без клієнта")}</select></div></div>
+    ${days || `<p style="color:var(--mute)">У програмі ще немає днів.</p>`}
+    <div class="btns" style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="button" data-act="day-add">${ICON.plus} День</button><button class="btn" type="button" data-act="prog-dup">Дублювати</button><button class="btn danger" type="button" data-act="prog-del">${ICON.trash} Видалити програму</button></div></div>`;
+}
+function newProgram(clientId) {
+  const p = { id: uid(), name: "Нова програма", clientId: clientId || "", days: [{ id: uid(), title: "День 1", exs: [] }] };
+  db.programs.push(p); ui.progId = p.id; save(); return p;
+}
+
+/* ============ schedule ============ */
+function renderSchedule() {
+  $("#topActions").innerHTML = `<button class="btn pri" type="button" data-act="sess-new">${ICON.plus} Додати заняття</button>`;
+  const start = ui.week, end = addDays(start, 6), tIso = iso(new Date());
+  const rng = start.getMonth() === end.getMonth() ? `${start.getDate()}–${end.getDate()} ${MON[end.getMonth()]}` : `${start.getDate()} ${MON[start.getMonth()]} – ${end.getDate()} ${MON[end.getMonth()]}`;
+  const ws = db.sessions.filter(s => s.date >= iso(start) && s.date <= iso(end));
+  let cols = "";
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(start, i), di = iso(d);
+    const items = ws.filter(s => s.date === di).sort((a, b) => a.time.localeCompare(b.time)).map(s => {
+      const c = clientById(s.clientId);
+      return `<div class="sess ${s.done ? "done" : ""}"><span class="t">${esc(s.time)} · ${s.duration} хв</span><b>${esc(c ? c.name : "Клієнт видалений")}</b><small>${esc(s.title || "Тренування")}</small>
+        <button class="tick" type="button" data-act="sess-toggle" data-id="${s.id}" aria-label="${s.done ? "Зняти позначку проведено" : "Позначити проведеним"}" aria-pressed="${s.done}">${ICON.check}</button>
+        <button type="button" class="chip" style="grid-column:1/-1;margin-top:6px" data-act="sess-open" data-id="${s.id}">Редагувати</button></div>`;
+    }).join("");
+    cols += `<div class="dcol ${di === tIso ? "today" : ""}"><div class="dhead"><b>${d.getDate()}</b><span>${WD[i]}</span></div>${items}<button class="addday" type="button" data-act="sess-new" data-date="${di}">+ Заняття</button></div>`;
+  }
+  const done = ws.filter(s => s.done).length;
+  $("#view").innerHTML = `<div class="wkbar"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn sm" type="button" data-act="wk-prev" aria-label="Попередній тиждень">←</button><button class="btn sm" type="button" data-act="wk-today">Сьогодні</button><button class="btn sm" type="button" data-act="wk-next" aria-label="Наступний тиждень">→</button><span class="rng">${rng}</span></div><span class="tag">${ws.length} занять · проведено ${done}</span></div><div class="wk">${cols}</div>`;
+}
+function sessionForm(s, date) {
+  const n = !s;
+  if (!db.clients.length) return `<div class="head"><h2 id="sheetTitle">Нове заняття</h2><button class="btn sm ghost" type="button" data-act="close">Закрити</button></div><div class="empty" style="padding:24px 0"><b>Спочатку додайте клієнта</b><p>Заняття прив'язується до клієнта.</p><button class="btn pri" type="button" data-act="client-new">Додати клієнта</button></div>`;
+  return `<div class="head"><h2 id="sheetTitle">${n ? "Нове заняття" : "Заняття"}</h2><button class="btn sm ghost" type="button" data-act="close">Закрити</button></div>
+  <div class="field"><label for="sClient">Клієнт</label><select class="inp" id="sClient">${clientOpts(s?.clientId || ui.pClient)}</select></div>
+  <div class="grid2"><div class="field"><label for="sDate">Дата</label><input class="inp" id="sDate" type="date" value="${s?.date || date || iso(new Date())}"></div><div class="field"><label for="sTime">Час</label><input class="inp" id="sTime" type="time" value="${s?.time || "18:00"}"></div></div>
+  <div class="grid2"><div class="field"><label for="sDur">Тривалість, хв</label><input class="inp" id="sDur" type="number" min="10" max="240" step="5" inputmode="numeric" value="${s?.duration || 60}"></div><div class="field"><label for="sTitle">Тема</label><input class="inp" id="sTitle" value="${esc(s?.title)}" placeholder="Наприклад, Силове"></div></div>
+  <div class="err" id="sErr" role="alert"></div>
+  <div class="btns"><button class="btn pri" type="button" data-act="sess-save" data-id="${s?.id || ""}">Зберегти</button>${n ? "" : `<button class="btn danger" type="button" data-act="sess-del" data-id="${s.id}">${ICON.trash} Видалити</button>`}</div>`;
+}
+function saveSession(id) {
+  const d = { clientId: $("#sClient").value, date: $("#sDate").value, time: $("#sTime").value, duration: Number($("#sDur").value), title: $("#sTitle").value.trim() };
+  const e = $("#sErr");
+  if (!d.clientId) return e.textContent = "Оберіть клієнта.";
+  if (!d.date) return e.textContent = "Вкажіть дату.";
+  if (!d.time) return e.textContent = "Вкажіть час.";
+  if (!(d.duration >= 10 && d.duration <= 240)) return e.textContent = "Тривалість має бути від 10 до 240 хвилин.";
+  const clash = db.sessions.find(s => s.id !== id && s.date === d.date && s.time === d.time);
+  if (id) Object.assign(db.sessions.find(s => s.id === id), d); else db.sessions.push({ id: uid(), done: false, ...d });
+  ui.week = monday(parseD(d.date)); save(); closeSheet(); render();
+  toast(clash ? "Збережено. На цей час уже є інше заняття" : "Заняття збережено");
+}
+
+/* ============ progress ============ */
+const METRICS = { weight: ["Вага", "кг", 20, 400], waist: ["Талія", "см", 20, 300], chest: ["Груди", "см", 20, 300], hips: ["Стегна", "см", 20, 300] };
+function renderProgress() {
+  $("#topActions").innerHTML = db.clients.length ? `<div class="field" style="min-width:220px"><select class="inp" id="prClient" aria-label="Клієнт" data-f="prclient">${clientOpts(ui.pClient)}</select></div>` : "";
+  if (!db.clients.length) { $("#view").innerHTML = `<div class="panel empty"><b>Немає клієнтів</b><p>Додайте клієнта, щоб записувати заміри та бачити динаміку.</p><button class="btn pri" type="button" data-act="client-new">${ICON.plus} Додати клієнта</button></div>`; return; }
+  if (!ui.pClient || !clientById(ui.pClient)) ui.pClient = db.clients[0].id;
+  $("#prClient").value = ui.pClient;
+  const c = clientById(ui.pClient), m = [...c.measures].sort((a, b) => a.date.localeCompare(b.date));
+  const [lab, unit] = METRICS[ui.metric];
+  const pts = m.filter(x => x[ui.metric]).map(x => ({ t: parseD(x.date).getTime(), v: x[ui.metric], d: x.date }));
+  const first = pts[0], last = pts[pts.length - 1], diff = pts.length > 1 ? +(last.v - first.v).toFixed(1) : null;
+  const mbtn = Object.entries(METRICS).map(([k, v]) => `<button type="button" data-act="metric" data-m="${k}" aria-pressed="${k === ui.metric}">${v[0]}</button>`).join("");
+  const rows = [...m].reverse().map(x => `<div class="mrow"><span class="n">${fmtShort(x.date)}.${x.date.slice(0, 4)}</span>${["weight", "waist", "chest", "hips"].map(k => `<span class="n">${x[k] ?? "–"}</span>`).join("")}<button class="icon-btn" type="button" data-act="meas-del" data-id="${x.id}" aria-label="Видалити заміри">${ICON.trash}</button></div>`).join("");
+  $("#view").innerHTML = `<div class="prog"><div class="panel chartbox"><div class="metrics" role="group" aria-label="Показник">${mbtn}</div>
+    <div class="stats"><div class="stat"><span class="tag">Остання</span><b>${last ? last.v + " " + unit : "–"}</b></div><div class="stat"><span class="tag">Зміна</span><b>${diff === null ? "–" : (diff > 0 ? "+" : diff < 0 ? "−" : "") + Math.abs(diff) + " " + unit}</b></div><div class="stat"><span class="tag">Записів</span><b>${pts.length}</b></div></div>
+    ${chartSVG(pts, unit, lab)}</div>
+    <div style="display:grid;gap:18px"><form class="panel mform" id="mForm" novalidate><h3 style="font-family:var(--font-display);font-size:16px;text-transform:uppercase">Новий замір</h3>
+      <div class="field"><label for="mDate">Дата</label><input class="inp" id="mDate" type="date" value="${iso(new Date())}"></div>
+      <div class="grid2"><div class="field"><label for="mWeight">Вага, кг</label><input class="inp" id="mWeight" inputmode="decimal" placeholder="70.5"></div><div class="field"><label for="mWaist">Талія, см</label><input class="inp" id="mWaist" inputmode="decimal"></div><div class="field"><label for="mChest">Груди, см</label><input class="inp" id="mChest" inputmode="decimal"></div><div class="field"><label for="mHips">Стегна, см</label><input class="inp" id="mHips" inputmode="decimal"></div></div>
+      <div class="err" id="mErr" role="alert"></div><button class="btn pri" type="submit">Записати</button></form>
+      <div class="panel" style="padding:14px 18px"><div class="mlist"><div class="mrow h"><span>Дата</span><span>Вага</span><span>Талія</span><span>Груди</span><span>Стегна</span><span></span></div>${rows || `<p style="color:var(--mute);padding:10px 0">Замірів ще немає.</p>`}</div></div></div></div>`;
+  $("#mForm").addEventListener("submit", e => { e.preventDefault(); addMeasure(); });
+}
+function addMeasure() {
+  const get = id => { const v = $("#" + id).value.trim().replace(",", "."); return v === "" ? null : Number(v); };
+  const rec = { id: uid(), date: $("#mDate").value, weight: get("mWeight"), waist: get("mWaist"), chest: get("mChest"), hips: get("mHips") };
+  const e = $("#mErr");
+  if (!rec.date) return e.textContent = "Вкажіть дату.";
+  const vals = Object.keys(METRICS).filter(k => rec[k] !== null);
+  if (!vals.length) return e.textContent = "Заповніть хоча б один показник.";
+  for (const k of vals) { const [l, u, mn, mx] = METRICS[k]; if (!isFinite(rec[k]) || rec[k] < mn || rec[k] > mx) return e.textContent = `${l}: введіть число від ${mn} до ${mx} ${u}.`; }
+  clientById(ui.pClient).measures.push(rec); save(); render(); toast("Заміри записано");
+}
+function chartSVG(pts, unit, lab) {
+  if (pts.length < 2) return `<div class="empty" style="padding:40px 12px"><b>Замало даних для графіка</b><p>Запишіть щонайменше два заміри показника «${lab}».</p></div>`;
+  const W = 640, H = 280, L = 46, R = 20, T = 18, B = 34;
+  let mn = Math.min(...pts.map(p => p.v)), mx = Math.max(...pts.map(p => p.v));
+  const pd = (mx - mn || 1) * .25; mn -= pd; mx += pd;
+  const t0 = pts[0].t, t1 = pts[pts.length - 1].t, X = t => L + (t1 === t0 ? 0 : (t - t0) / (t1 - t0)) * (W - L - R), Y = v => T + (1 - (v - mn) / (mx - mn)) * (H - T - B);
+  const ticks = [0, 1, 2, 3].map(i => mn + (mx - mn) * i / 3);
+  const path = pts.map((p, i) => `${i ? "L" : "M"}${X(p.t).toFixed(1)} ${Y(p.v).toFixed(1)}`).join(" ");
+  const area = `${path} L${X(t1).toFixed(1)} ${H - B} L${X(t0).toFixed(1)} ${H - B} Z`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Динаміка: ${lab}, ${unit}">
+    <defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3350ff" stop-opacity=".4"/><stop offset="1" stop-color="#3350ff" stop-opacity="0"/></linearGradient></defs>
+    ${ticks.map(v => `<line x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="#ffffff" stroke-opacity=".08"/><text x="${L - 8}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end" font-size="11" fill="#8b97b1" font-family="JetBrains Mono, monospace">${v.toFixed(1)}</text>`).join("")}
+    <path d="${area}" fill="url(#ga)"/><path d="${path}" fill="none" stroke="#7f94ff" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+    ${pts.map((p, i) => `<circle cx="${X(p.t).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="${i === pts.length - 1 ? 6 : 4}" fill="${i === pts.length - 1 ? "#fff" : "#0b101c"}" stroke="#7f94ff" stroke-width="2.5"><title>${fmtDate(p.d)}: ${p.v} ${unit}</title></circle>`).join("")}
+    <text x="${L}" y="${H - 10}" font-size="11" fill="#8b97b1" font-family="JetBrains Mono, monospace">${fmtShort(pts[0].d)}</text><text x="${W - R}" y="${H - 10}" text-anchor="end" font-size="11" fill="#8b97b1" font-family="JetBrains Mono, monospace">${fmtShort(pts[pts.length - 1].d)}</text></svg>`;
+}
+
+/* ============ backup ============ */
+function backupSheet() {
+  openSheet(`<div class="head"><h2 id="sheetTitle">Резервна копія</h2><button class="btn sm ghost" type="button" data-act="close">Закрити</button></div>
+  <p style="color:var(--mute)">Дані зберігаються лише в цьому браузері. Скопіюйте текст нижче й збережіть у надійному місці. Щоб відновити, вставте його в поле й натисніть «Відновити».</p>
+  <div class="field"><label for="bkText">Дані</label><textarea class="inp" id="bkText" style="min-height:200px;font-family:var(--font-mono);font-size:12px">${esc(JSON.stringify(db))}</textarea></div>
+  <div class="err" id="bkErr" role="alert"></div>
+  <div class="btns"><button class="btn" type="button" data-act="bk-copy">Скопіювати</button><button class="btn pri" type="button" data-act="bk-restore">Відновити</button></div>`, true);
+}
+
+/* ============ events ============ */
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  const a = b.dataset.act, id = b.dataset.id;
+  switch (a) {
+    case "nav": go(b.dataset.v); break;
+    case "close": closeSheet(); break;
+    case "client-new": openSheet(clientForm(null)); break;
+    case "client-open": openSheet(clientForm(clientById(id))); break;
+    case "client-save": saveClient(id); break;
+    case "client-del": armDelete(b, () => deleteClient(id)); break;
+    case "c-prog": { closeSheet(); const p = db.programs.find(x => x.clientId === id) || newProgram(id); ui.progId = p.id; go("builder"); break; }
+    case "c-sess": ui.pClient = id; closeSheet(); go("schedule"); openSheet(sessionForm(null), true); break;
+    case "c-meas": ui.pClient = id; closeSheet(); go("progress"); break;
+    case "prog-new": newProgram(); render(); break;
+    case "prog-sel": ui.progId = id; renderBuilder(); break;
+    case "prog-dup": { const p = curProg(), cp = JSON.parse(JSON.stringify(p)); cp.id = uid(); cp.demo = false; cp.name = p.name + " (копія)"; cp.days.forEach(d => { d.id = uid(); d.exs.forEach(x => x.id = uid()); }); db.programs.push(cp); ui.progId = cp.id; save(); render(); toast("Програму продубльовано"); break; }
+    case "prog-del": armDelete(b, () => { db.programs = db.programs.filter(x => x.id !== ui.progId); ui.progId = null; save(); render(); toast("Програму видалено"); }); break;
+    case "day-add": { const p = curProg(); p.days.push({ id: uid(), title: "День " + (p.days.length + 1), exs: [] }); save(); renderBuilder(); break; }
+    case "day-del": armDelete(b, () => { curProg().days.splice(+b.dataset.d, 1); save(); renderBuilder(); }); break;
+    case "ex-add": curProg().days[+b.dataset.d].exs.push({ id: uid(), name: "", sets: "", reps: "", weight: "" }); save(); renderBuilder(); { const rows = $$(".day")[+b.dataset.d].querySelectorAll(".ex .nm"); rows[rows.length - 1]?.focus(); } break;
+    case "ex-quick": curProg().days[+b.dataset.d].exs.push({ id: uid(), name: b.dataset.n, sets: "3", reps: "10", weight: "" }); save(); renderBuilder(); break;
+    case "ex-del": curProg().days[+b.dataset.d].exs.splice(+b.dataset.e, 1); save(); renderBuilder(); break;
+    case "wk-prev": ui.week = addDays(ui.week, -7); renderSchedule(); break;
+    case "wk-next": ui.week = addDays(ui.week, 7); renderSchedule(); break;
+    case "wk-today": ui.week = monday(new Date()); renderSchedule(); break;
+    case "sess-new": openSheet(sessionForm(null, b.dataset.date), true); break;
+    case "sess-open": openSheet(sessionForm(db.sessions.find(s => s.id === id)), true); break;
+    case "sess-save": saveSession(id); break;
+    case "sess-del": armDelete(b, () => { db.sessions = db.sessions.filter(s => s.id !== id); save(); closeSheet(); render(); toast("Заняття видалено"); }); break;
+    case "sess-toggle": { const s = db.sessions.find(x => x.id === id); s.done = !s.done; save(); renderSchedule(); break; }
+    case "metric": ui.metric = b.dataset.m; renderProgress(); break;
+    case "meas-del": armDelete(b, () => { const c = clientById(ui.pClient); c.measures = c.measures.filter(x => x.id !== id); save(); renderProgress(); }); break;
+    case "clear-demo": db.clients = db.clients.filter(c => !c.demo); db.programs = db.programs.filter(p => !p.demo); db.sessions = db.sessions.filter(s => !s.demo && clientById(s.clientId)); db.programs.forEach(p => { if (p.clientId && !clientById(p.clientId)) p.clientId = ""; }); ui.progId = null; ui.pClient = null; save(); render(); toast("Приклади видалено"); break;
+    case "backup": backupSheet(); break;
+    case "bk-copy": { const t = $("#bkText"); t.select(); (navigator.clipboard?.writeText(t.value) || Promise.reject()).then(() => toast("Скопійовано"), () => toast("Виділено, скопіюйте вручну")); break; }
+    case "bk-restore": { try { const d = JSON.parse($("#bkText").value); if (!d || !Array.isArray(d.clients)) throw 0; db = { programs: [], sessions: [], ...d }; save(); closeSheet(); ui.progId = null; ui.pClient = null; render(); toast("Дані відновлено"); } catch (_) { $("#bkErr").textContent = "Не вдалося прочитати дані. Скопіюйте текст повністю."; } break; }
+  }
+});
+document.addEventListener("input", e => {
+  const t = e.target, f = t.dataset.f; if (!f) return;
+  const p = curProg();
+  if (f === "pname") { p.name = t.value; const n = $(`.pitem[data-id="${p.id}"] .pn`); if (n) n.textContent = t.value || "Без назви"; }
+  else if (f === "dtitle") p.days[+t.dataset.d].title = t.value;
+  else if (f === "ex") p.days[+t.dataset.d].exs[+t.dataset.e][t.dataset.k] = t.value;
+  else return;
+  save();
+});
+document.addEventListener("change", e => {
+  const t = e.target, f = t.dataset.f;
+  if (f === "pclient") { curProg().clientId = t.value; save(); renderBuilder(); }
+  if (f === "prclient") { ui.pClient = t.value; renderProgress(); }
+});
+document.addEventListener("input", e => { if (e.target.id === "cName") { e.target.classList.remove("bad"); $("#cNameErr").textContent = ""; } });
+
+render();
+</script>
+
+</body></html>
